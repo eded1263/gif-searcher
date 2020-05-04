@@ -12,12 +12,12 @@ class _HomePageState extends State<HomePage> {
 
   String _search;
   int _offset = 0;
-  int _limit = 20;
+  final _textController = TextEditingController();
 
   Future<Map>_getGifs() async{
     http.Response response;
     if(_search == null){
-      response = await http.get("https://api.giphy.com/v1/gifs/trending?api_key=PO8tpmjvilenpFmuRoEpB1GIHG5H3N1C&limit=$_limit&rating=G");
+      response = await http.get("https://api.giphy.com/v1/gifs/trending?api_key=PO8tpmjvilenpFmuRoEpB1GIHG5H3N1C&limit=20&rating=G");
     }else{
       response = await http.get("https://api.giphy.com/v1/gifs/search?api_key=PO8tpmjvilenpFmuRoEpB1GIHG5H3N1C&q=$_search&limit=19&offset=$_offset&rating=G&lang=pt");
     } 
@@ -45,11 +45,10 @@ class _HomePageState extends State<HomePage> {
               ),
               style: TextStyle(color: Colors.white, fontSize: 18.0),
               textAlign: TextAlign.center,
+              controller: _textController,
               onSubmitted: (text){
                 if(text != ""){
-                  setState(() {
-                    _search = text;
-                  });
+                  _updateFutureBuilder(text, 0);
                 }
               },
             ),
@@ -67,11 +66,8 @@ class _HomePageState extends State<HomePage> {
                   style: TextStyle(fontSize: 12.0, color: Colors.white)
                 ),
                 onPressed: (){
-                  if(_search != null){
-                    setState(() {
-                      _search = null;
-                    });
-                  }
+                  _textController.text = "";
+                  _updateFutureBuilder(null, 0);
                 },
               ),
             )
@@ -125,7 +121,10 @@ class _HomePageState extends State<HomePage> {
       itemBuilder: (context, index){
         if(_search == null || index < snapshot.data["data"].length){
           return GestureDetector(
-            child: Image.network(snapshot.data["data"][index]["images"]["fixed_height"]["url"], height: 300.0, fit: BoxFit.cover),
+            child: Image.network(snapshot.data["data"][index]["images"]["fixed_height"]["url"],
+              height: 300.0,
+              fit: BoxFit.cover
+            ),
           );
         }else{
           return Container(
@@ -134,13 +133,22 @@ class _HomePageState extends State<HomePage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   Icon(Icons.add, color: Colors.white, size: 70.0),
-                  Text("Carregar mais", style: TextStyle(color:Colors.white, fontSize: 22.0),)
+                  Text("Carregar outros", style: TextStyle(color:Colors.white, fontSize: 22.0),)
                 ],
-              )
+              ),
+              onTap: (){
+                _updateFutureBuilder(_search, _offset += 20);
+              },
             ),
           );
         }
       },
     );
+  }
+  void _updateFutureBuilder( dynamic search, int offset){
+    setState(() {
+      _search = search;
+      _offset = offset;
+    });
   }
 }
